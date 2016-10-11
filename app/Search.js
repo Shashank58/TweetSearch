@@ -15,6 +15,7 @@ const Buffer = require('buffer/').Buffer;
 const ds = new ListView.DataSource({
   rowHasChanged: (row1, row2) => row1 !== row2
 });
+let bearerToken = '';
 
 class Search extends Component {
 
@@ -29,18 +30,22 @@ class Search extends Component {
   }
 
   searchResults(tweet, sectionID, rowID) {
-    return(
-      <View style={{ flexDirection: 'row' }}>
-      <Image source={{ uri: tweet.user.profile_image_url_https }} style={styles.profilePic} />
-      <View style={{ flexDirection: 'column' }}>
-        <Text>{tweet.user.screen_name}</Text>
-        <Text>{tweet.text}</Text>
+    return (
+      <View style={{ flexDirection: 'row', margin: 12 }}>
+        <Image source={{ uri: tweet.user.profile_image_url_https }} style={styles.profilePic} />
+        <View style={{ marginLeft: 16, flexDirection: 'column', flex: 1 }}>
+          <Text style={{fontSize: 16, fontWeight: '600'}}>{tweet.user.screen_name}</Text>
+          <Text style={{ flexWrap: 'wrap', flex: 1 }}>{tweet.text}</Text>
+        </View>
       </View>
-    </View>
     );
   }
 
   searchTweets() {
+    if (bearerToken !== '') {
+      return this.fetchTweets();
+    }
+
     let credentials = new Buffer('JLUkNqnadVdBHXBdSquJLUbcO' + ':' +
       'FbAeLWvmYjViphrHE5DnexbwOlGtDyi4KRjFh7zDEzLWMrMMyU').toString('base64');
     //'JLUkNqnadVdBHXBdSquJLUbcO:FbAeLWvmYjViphrHE5DnexbwOlGtDyi4KRjFh7zDEzLWMrMMyU';
@@ -53,13 +58,16 @@ class Search extends Component {
       body: "grant_type=client_credentials"
     })
       .then(response => response.json())
-      .then(result => { this.fetchTweets(result.access_token) })
+      .then(result => {
+        bearerToken = result.access_token;
+        this.fetchTweets();
+      })
       .catch((error) => { console.error(error); });
   }
 
-  fetchTweets(bearerToken) {
+  fetchTweets() {
     that = this;
-    let url = 'https://api.twitter.com/1.1/search/tweets.json?q=' + this.state.searchQuery;
+    let url = 'https://api.twitter.com/1.1/search/tweets.json?q=%23' + this.state.searchQuery;
     fetch(url, {
       method: 'GET',
       headers: {
