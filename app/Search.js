@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 
 import NavBar from './NavBar';
-import Globals from '.Globals';
+import Globals from './Globals';
 
 const Buffer = require('buffer/').Buffer;
 const ds = new ListView.DataSource({
