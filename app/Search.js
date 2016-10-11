@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import NavBar from './NavBar';
+import Globals from '.Globals';
 
 const Buffer = require('buffer/').Buffer;
 const ds = new ListView.DataSource({
@@ -49,9 +50,8 @@ class Search extends Component {
       return this.fetchTweets();
     }
 
-    let credentials = new Buffer('JLUkNqnadVdBHXBdSquJLUbcO' + ':' +
-      'FbAeLWvmYjViphrHE5DnexbwOlGtDyi4KRjFh7zDEzLWMrMMyU').toString('base64');
-    //'JLUkNqnadVdBHXBdSquJLUbcO:FbAeLWvmYjViphrHE5DnexbwOlGtDyi4KRjFh7zDEzLWMrMMyU';
+    let credentials = new Buffer( Globals.CONSUMER_KEY+ ':' + Globals.CONSUMER_SECRET).toString('base64');
+
     fetch('https://api.twitter.com/oauth2/token', {
       method: 'POST',
       headers: {
