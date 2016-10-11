@@ -6,7 +6,8 @@ import {
   ListView,
   TextInput,
   StyleSheet,
-  TouchableOpacity
+  TouchableOpacity,
+  ActivityIndicator
 } from 'react-native';
 
 import NavBar from './NavBar';
@@ -24,6 +25,7 @@ class Search extends Component {
     this.fetchTweets = this.fetchTweets.bind(this);
     this.state = {
       loading: false,
+      message: '',
       searchQuery: '',
       dataSource: ds.cloneWithRows([])
     };
@@ -34,7 +36,7 @@ class Search extends Component {
       <View style={{ flexDirection: 'row', margin: 12 }}>
         <Image source={{ uri: tweet.user.profile_image_url_https }} style={styles.profilePic} />
         <View style={{ marginLeft: 16, flexDirection: 'column', flex: 1 }}>
-          <Text style={{fontSize: 16, fontWeight: '600'}}>{tweet.user.screen_name}</Text>
+          <Text style={{ fontSize: 16, fontWeight: '600' }}>{tweet.user.screen_name}</Text>
           <Text style={{ flexWrap: 'wrap', flex: 1 }}>{tweet.text}</Text>
         </View>
       </View>
@@ -42,6 +44,7 @@ class Search extends Component {
   }
 
   searchTweets() {
+    this.setState({ loading: true });
     if (bearerToken !== '') {
       return this.fetchTweets();
     }
@@ -67,7 +70,8 @@ class Search extends Component {
 
   fetchTweets() {
     that = this;
-    let url = 'https://api.twitter.com/1.1/search/tweets.json?q=%23' + this.state.searchQuery;
+    let url = 'https://api.twitter.com/1.1/search/tweets.json?q=%23' + this.state.searchQuery
+      + "&count=20";
     fetch(url, {
       method: 'GET',
       headers: {
@@ -75,17 +79,49 @@ class Search extends Component {
       }
     })
       .then(response => response.json())
-      .then(result => that.setState({ dataSource: ds.cloneWithRows(result.statuses) }))
+      .then(result => {
+        that.setState({
+          loading: false,
+          message: result.statuses.length === 0 ? 'No statuses found' : '',
+          dataSource: ds.cloneWithRows(result.statuses)
+        })
+      })
       .catch((error) => { console.error(error); });
   }
 
+  renderSeparator(sectionID, rowID) {
+    return (
+      <View style={styles.separator} key={sectionID + rowID} />
+    );
+  }
+
   render() {
+    if (this.state.loading) {
+      return (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5FCFF' }}>
+          <ActivityIndicator animating={true} size='large' />
+        </View>
+      );
+    }
+
+    let tweets = this.state.message === '' ?
+      (<ListView
+        dataSource={this.state.dataSource}
+        renderRow={this.searchResults.bind(this)}
+        renderSeparator={this.renderSeparator}
+        enableEmptySections={true}
+        />) : 
+        (<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5FCFF' }}>
+          <Text>{this.state.message}</Text>
+        </View>);
+    
     return (
       <View style={styles.container}>
         <NavBar />
         <View style={styles.searchContainer}>
           <TextInput
             placeholder='Enter hashtag'
+            defaultValue={this.state.searchQuery}
             onChangeText={text => this.setState({ searchQuery: text })}
             style={styles.searchInput}
             />
@@ -93,11 +129,7 @@ class Search extends Component {
             <Image source={require('../images/ic_search.png')} style={styles.searchIcon} />
           </TouchableOpacity>
         </View>
-        <ListView
-          dataSource={this.state.dataSource}
-          renderRow={this.searchResults.bind(this)}
-          enableEmptySections={true}
-          />
+        {tweets}
       </View>
     );
   }
@@ -130,7 +162,11 @@ const styles = StyleSheet.create({
   profilePic: {
     height: 36,
     width: 36
-  }
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#CCC'
+  },
 });
 
 module.exports = Search;
